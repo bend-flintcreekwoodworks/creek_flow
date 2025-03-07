@@ -1,0 +1,22 @@
+{
+  "name": "flintcreekflow",
+  "version": "1.0.0",
+  "description": "Shop management application for Flint Creek Woodworks",
+  "main": "main.js",
+  "scripts": {
+    "start": "concurrently \"cmd /c venv\\Scripts\\activate && python app.py\" \"electron .\"",
+    "build": "electron-builder"
+  },
+  "dependencies": {
+    "electron": "^25.1.8",
+    "electron-builder": "^23.6.0",
+    "concurrently": "^7.6.0"
+  },
+  "build": {
+    "appId": "com.flintcreek.flow",
+    "productName": "FlintCreekFlow",
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
