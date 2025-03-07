@@ -34,7 +34,12 @@ class Job(db.Model):
     filename = db.Column(db.String(255), unique=True, nullable=False)
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
 
-class ScannedPart(db.Model):
+class Part(db.Model):  # Stores all expected parts per job
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    part_name = db.Column(db.String(255), nullable=False)
+
+class ScannedPart(db.Model):  # Stores only scanned parts
     id = db.Column(db.Integer, primary_key=True)
     job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
     part_name = db.Column(db.String(255), nullable=False)
@@ -75,9 +80,9 @@ def jobs():
     job_files = Job.query.order_by(Job.upload_date.desc()).all()
     
     for job in job_files:
-        total_parts = ScannedPart.query.filter_by(job_id=job.id).count()
-        scanned_parts = ScannedPart.query.filter_by(job_id=job.id).count()
-        job.progress = (scanned_parts / total_parts * 100) if total_parts > 0 else 0
+        total_parts = Part.query.filter_by(job_id=job.id).count()  # Count all expected parts
+        scanned_parts = ScannedPart.query.filter_by(job_id=job.id).count()  # Count only scanned parts
+        job.progress = (scanned_parts / total_parts * 100) if total_parts > 0 else 0  # Avoid division by zero
 
     return render_template('jobs.html', job_files=job_files, is_admin=current_user.is_admin)
 
@@ -128,6 +133,7 @@ def delete_job(filename):
 
     job = Job.query.filter_by(filename=filename).first()
     if job:
+        Part.query.filter_by(job_id=job.id).delete()
         ScannedPart.query.filter_by(job_id=job.id).delete()
         db.session.delete(job)
         db.session.commit()
@@ -152,12 +158,16 @@ def checklist(job_name):
         lines = file.readlines()[1:]
         for line in lines:
             parts = line.strip().split(',')
+            new_part = Part(job_id=job.id, part_name=parts[0])
+            db.session.add(new_part)  # Store expected parts
             data.append({
                 "Part Name": parts[0],
                 "Width (inches)": parts[1],
                 "Length (inches)": parts[2],
                 "Cabinet Number": parts[3]
             })
+
+    db.session.commit()
 
     scanned_records = ScannedPart.query.filter_by(job_id=job.id).all()
     scanned_parts = [record.part_name for record in scanned_records]
