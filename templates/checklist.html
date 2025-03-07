@@ -1,0 +1,111 @@
+{% include 'header.html' %}
+
+<div class="container">
+    <main>
+        <h1>Parts List for {{ filename }}</h1>
+
+        <div class="barcode-container">
+            <input type="text" id="barcodeInput" class="barcode-input" placeholder="Scan barcode" autofocus>
+            <button id="resetButton" class="button reset-button">Reset Scanned Data</button>
+        </div>
+
+        <div id="errorMessage" class="error-message">Barcode not found!</div>
+
+        <div id="summary">
+            <p>Total Scanned: <span id="totalScanned">0</span></p>
+            <p>Total Remaining: <span id="totalRemaining">0</span></p>
+        </div>
+
+        <table class="parts-table">
+            <thead>
+                <tr>
+                    <th>Part Name</th>
+                    <th>Width</th>
+                    <th>Length</th>
+                    <th>Cabinet</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr data-barcode="{{ row['Part Name'] }},{{ row['Width (inches)'] }},{{ row['Length (inches)'] }},{{ row['Cabinet Number'] }}">
+                    <td>{{ row['Part Name'] }}</td>
+                    <td>{{ row['Width (inches)'] }}</td>
+                    <td>{{ row['Length (inches)'] }}</td>
+                    <td>{{ row['Cabinet Number'] }}</td>
+                    <td class="status"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <br>
+        <a href="{{ url_for('jobs') }}" class="button">Back to Jobs</a>
+    </main>
+</div>
+
+{% include 'footer.html' %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        let rowMap = new Map();
+        const barcodeInput = document.getElementById("barcodeInput");
+
+        document.querySelectorAll("tr[data-barcode]").forEach(row => {
+            let barcode = row.getAttribute("data-barcode").trim();
+            rowMap.set(barcode, row);
+        });
+
+        // Standardize barcode format to match scanner output
+        let scannedParts = JSON.parse('{{ scanned_parts | tojson | default("[]") }}');
+        scannedParts.forEach(barcode => {
+            barcode = barcode.replace(/\s+/g, " ").trim();  // Remove extra spaces
+            let matchedRow = rowMap.get(barcode);
+            if (matchedRow) {
+                matchedRow.style.backgroundColor = "lightgreen";
+                matchedRow.classList.add("checked");
+                matchedRow.querySelector(".status").innerText = "✔";
+            }
+        });
+
+        updateSummary();
+
+        barcodeInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                let barcode = barcodeInput.value.trim();
+                barcodeInput.value = "";
+
+                if (rowMap.has(barcode)) {
+                    let matchedRow = rowMap.get(barcode);
+                    if (!matchedRow.classList.contains("checked")) {
+                        matchedRow.style.backgroundColor = "lightgreen";
+                        matchedRow.classList.add("checked");
+                        matchedRow.querySelector(".status").innerText = "✔";
+
+                        // Save scanned part to DB
+                        fetch("/scan_part", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                            body: new URLSearchParams({
+                                job_id: "{{ job.id }}",
+                                part_name: barcode
+                            })
+                        });
+
+                        updateSummary();
+                        document.getElementById("errorMessage").style.display = "none";
+                    }
+                } else {
+                    document.getElementById("errorMessage").style.display = "block";
+                }
+            }
+        });
+
+        function updateSummary() {
+            const totalRows = document.querySelectorAll("tr[data-barcode]").length;
+            const scannedRows = document.querySelectorAll("tr.checked").length;
+            document.getElementById("totalScanned").innerText = scannedRows;
+            document.getElementById("totalRemaining").innerText = totalRows - scannedRows;
+        }
+    });
+</script>

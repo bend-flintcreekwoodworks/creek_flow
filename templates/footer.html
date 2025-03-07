@@ -1,0 +1,12 @@
+<footer>
+    <p>&copy; 2025 Flint Creek Woodworks. All Rights Reserved.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+<script>
+    var socket = io();
+    socket.on('refresh', () => {
+        location.reload();
+    });
+</script>
+</body>
+</html>

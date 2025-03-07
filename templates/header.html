@@ -1,0 +1,23 @@
+<header>
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='logo.jpg') }}" class="logo" alt="Company Logo">
+        <h1>Flint Creek Woodworks</h1>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </div>
+
+    <div class="user-info">
+        {% if current_user.is_authenticated %}
+            <span>Logged in as: <strong>{{ current_user.username }}</strong></span>
+            <a href="{{ url_for('logout') }}" class="button logout-button">Logout</a>
+        {% endif %}
+    </div>
+</header>
+
+<nav>
+    <ul>
+        <li><a href="{{ url_for('home') }}">Home</a></li>
+        <li><a href="{{ url_for('jobs') }}">Jobs</a></li>
+        <li><a href="{{ url_for('trello') }}">Trello</a></li>
+        <li><a href="{{ url_for('schedule') }}">Schedule</a></li>
+    </ul>
+</nav>

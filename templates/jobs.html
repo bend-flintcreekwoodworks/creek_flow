@@ -1,0 +1,56 @@
+{% include 'header.html' %}
+
+<div class="main-content">
+    <h1>Uploaded Jobs</h1>
+    <p>Select a job folder to upload, or browse existing jobs below.</p>
+
+    <!-- Upload Job Folder -->
+    <section class="upload-section">
+        <h2>Upload a New Job Folder</h2>
+        <form action="{{ url_for('upload_folder') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+            <label for="folder">Select a Job Folder:</label>
+            <input type="file" id="folder" name="folder" 
+                   webkitdirectory directory multiple accept=".des">
+            <button type="submit" class="button">Upload</button>
+        </form>
+    </section>
+    
+    <!-- Job List -->
+    <section class="job-list-section">
+        <h2>Available Jobs</h2>
+        <table class="job-table">
+            <thead>
+                <tr>
+                    <th>Job Name</th>
+                    <th>Progress</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in job_files %}
+                <tr>
+                    <td>{{ job.filename }}</td>
+                    <td>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {{ job.progress }}%;">{{ job.progress }}%</div>
+                        </div>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('checklist', job_name=job.filename) }}" class="button">
+                            View Checklist
+                        </a>
+                    
+                        {% if current_user.is_authenticated and current_user.is_admin %}
+                        <form action="{{ url_for('delete_job', filename=job.filename) }}" method="POST" class="inline-form">
+                            <button type="submit" class="delete-button">Delete</button>
+                        </form>
+                        {% endif %}
+                    </td>                    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+
+{% include 'footer.html' %}

@@ -1,0 +1,25 @@
+# Virtual Environment
+venv/
+__pycache__/
+*.pyc
+
+# Flask Secrets & Database
+instance/
+*.sqlite3
+*.db
+.env
+
+# Migrations (Optional - Keep if using Flask-Migrate)
+migrations/
+
+# Uploads & Processed Data
+uploads/
+csv_files/
+
+# Electron & NodeJS
+node_modules/
+dist/
+build/
+
+# Logs & Misc
+*.log
